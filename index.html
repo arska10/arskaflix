@@ -270,30 +270,34 @@ async function fetchSeasons(imdbID) {
 }
 
         // Function to populate episodes based on selected season
-        function populateEpisodes() {
-            const seasonSelect = document.getElementById('season-select');
-            const episodeSelect = document.getElementById('episode-select');
-            const selectedSeason = seasonSelect.value;
-            const imdbID = document.querySelector('.result-item button').getAttribute('onclick').match(/'([^']+)'/)[1];
-
-            episodeSelect.innerHTML = ''; // Clear previous options
-            fetchEpisodes(imdbID, selectedSeason).then(episodes => {
-                episodes.forEach(episode => {
-                    const option = document.createElement('option');
-                    option.value = episode.Episode;
-                    option.textContent = `Episode ${episode.Episode}: ${episode.Title}`;
-                    episodeSelect.appendChild(option);
-                });
+    function populateEpisodes(imdbID, selectedSeason) {
+    const episodeSelect = document.getElementById('episode-select');
+    
+    episodeSelect.innerHTML = ''; // Clear previous options
+    fetchEpisodes(imdbID, selectedSeason).then(episodes => {
+        episodes.forEach(episode => {
+            const option = document.createElement('option');
+            option.value = episode.Episode;
+            option.textContent = `Episode ${episode.Episode}: ${episode.Title}`;
+            episodeSelect.appendChild(option);
+        });
+        
+            // Automatically select the first episode in the dropdown
+                    if (episodes.length > 0) {
+                    episodeSelect.selectedIndex = 0;
+                }
             });
         }
+
 
         // Function to fetch episodes for a specific season
         async function fetchEpisodes(imdbID, season) {
             const episodeUrl = `https://www.omdbapi.com/?apikey=${OMDB_API_KEY}&i=${imdbID}&Season=${season}`;
             const response = await fetch(episodeUrl);
             const data = await response.json();
-            return data.Episodes || [];
+            return data.Episodes || []; // Return episodes or an empty array if none
         }
+
 
         // Function to watch the selected episode
         function watchEpisode() {
