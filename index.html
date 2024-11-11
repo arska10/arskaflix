@@ -1,79 +1,333 @@
-// Function to fetch and display available seasons
-async function fetchSeasons(imdbID) {
-    const seasonSelect = document.getElementById('season-select');
-    const episodeSelect = document.getElementById('episode-select');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arskaflix</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
 
-    seasonSelect.style.display = 'block'; // Show season selector
-    episodeSelect.style.display = 'block'; // Show episode selector
+        h1 {
+            text-align: center;
+            color: #333;
+        }
 
-    const seasonUrl = `https://www.omdbapi.com/?apikey=${OMDB_API_KEY}&i=${imdbID}&type=series`;
+        #search-results {
+            margin-top: 20px;
+        }
 
-    let keepFetching = true;
-    let season = 1;
+        .result-item {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
 
-    // Clear the season select options
-    seasonSelect.innerHTML = '';
+        .result-item h3 {
+            margin: 0;
+            color: #007BFF;
+        }
 
-    while (keepFetching) {
-        const response = await fetch(`${seasonUrl}&Season=${season}`);
-        const data = await response.json();
+        .result-item img {
+            float: left;
+            margin-right: 10px;
+            border-radius: 5px;
+        }
 
-        if (data.Response === "True" && data.Episodes) {
-            // Create a new option for each season
-            const option = document.createElement('option');
-            option.value = season;
-            option.textContent = `Season ${season}`;
-            seasonSelect.appendChild(option);
+        button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
 
-            // If it's the first season, fetch and display episodes immediately
-            if (season === 1) {
-                populateEpisodes(imdbID, season); // Populate episodes for the first season
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .movie-details {
+            display: none;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .movie-details img {
+            width: 300px;
+            border-radius: 5px;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .back-button {
+            margin: 20px 0;
+            cursor: pointer;
+            color: #007BFF;
+            text-decoration: underline;
+        }
+
+        #embed-player {
+            margin-top: 20px;
+        }
+
+        select {
+            padding: 10px;
+            margin-right: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            background: #fff;
+        }
+
+        iframe {
+            margin-top: 20px;
+            border: none;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Search for Movies or TV Shows</h1>
+    <input type="text" id="search-input" placeholder="Enter movie or show name" />
+    <button onclick="search()">Search</button>
+
+    <div id="search-results"></div>
+
+    <!-- Movie/Show details section -->
+    <div id="movie-details" class="movie-details">
+        <span class="back-button" onclick="goBack()">← Back to Search Results</span>
+        <h2 id="details-title">Movie Title</h2>
+        <img id="details-poster" src="" alt="Poster">
+        <p id="details-plot"></p>
+        <p><strong>Release Year:</strong> <span id="details-year"></span></p>
+
+        <!-- Embed player and server selection -->
+        <div id="embed-player">
+            <h3>Select Server:</h3>
+            <select id="server-select"></select>
+            <h3>Select Season and Episode</h3>
+            <label for="season-select">Season:</label>
+            <select id="season-select" onchange="populateEpisodes()"></select>
+            <label for="episode-select">Episode:</label>
+            <select id="episode-select"></select>
+            <button onclick="watchEpisode()">Watch Episode</button>
+
+            <h3>Watch Now</h3>
+            <iframe id="media-player" src="" width="640" height="360" allowfullscreen></iframe>
+        </div>
+    </div>
+
+    <script>
+        const OMDB_API_KEY = '431eaee8'; // Replace with your OMDb API key
+
+        // Function to search for movies or TV shows
+        function search() {
+            const query = document.getElementById('search-input').value;
+            const url = `https://www.omdbapi.com/?apikey=${OMDB_API_KEY}&s=${query}`;
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.Response === "True") {
+                        displayResults(data.Search);
+                    } else {
+                        document.getElementById('search-results').innerHTML = 'No results found.';
+                    }
+                })
+                .catch(err => console.error(err));
+        }
+
+        // Function to display the search results
+        function displayResults(results) {
+            const searchResultsDiv = document.getElementById('search-results');
+            searchResultsDiv.innerHTML = '';  // Clear previous results
+
+            results.forEach(result => {
+                const resultDiv = document.createElement('div');
+                resultDiv.className = 'result-item';
+                resultDiv.innerHTML = `
+                    <h3>${result.Title} (${result.Year})</h3>
+                    <img src="${result.Poster}" alt="${result.Title} Poster" width="100">
+                    <button onclick="viewDetails('${result.imdbID}', '${result.Type}')">View Details</button>
+                `;
+                searchResultsDiv.appendChild(resultDiv);
+            });
+        }
+
+        // Function to display details for a movie or TV show
+        function viewDetails(imdbID, type) {
+            const url = `https://www.omdbapi.com/?apikey=${OMDB_API_KEY}&i=${imdbID}`;
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    displayMovieDetails(data, type);
+                })
+                .catch(err => console.error(err));
+        }
+
+        // Function to display movie or show details
+        function displayMovieDetails(movie, type) {
+            // Hide search results
+            document.getElementById('search-results').style.display = 'none';
+
+            // Show movie/show details
+            const movieDetailsDiv = document.getElementById('movie-details');
+            movieDetailsDiv.style.display = 'block';
+
+            // Populate details
+            document.getElementById('details-title').textContent = movie.Title;
+            document.getElementById('details-poster').src = movie.Poster;
+            document.getElementById('details-plot').textContent = movie.Plot;
+            document.getElementById('details-year').textContent = movie.Year;
+
+            // Populate server options
+            const serverSelect = document.getElementById('server-select');
+            serverSelect.innerHTML = `
+                <option value="https://embed.su">Embed.su</option>
+                <option value="https://vidsrc.pro">vidsrc.pro</option>
+                <option value="https://vidsrc.to">vidsrc.to</option>
+                <option value="https://vidsrc.me">vidsrc.me</option>
+                <option value="https://2embed.cc">2embed.cc</option>
+                <option value="https://superembed.stream">superembed.stream</option>
+            `;
+
+            // Embed player logic for movies and TV shows
+            const mediaPlayer = document.getElementById('media-player');
+
+            if (type === "movie") {
+                // Default embed URL for the selected movie
+                const embedUrl = `https://embed.su/embed/movie/${movie.imdbID}`;
+                mediaPlayer.src = embedUrl;
+
+                // Change player source when different server is selected
+                serverSelect.addEventListener('change', function() {
+                    const selectedServer = this.value;
+                    const newEmbedUrl = selectedServer === 'https://superembed.stream' 
+                        ? `https://multiembed.mov/?video_id=${movie.imdbID}` 
+                        : `${selectedServer}/embed/movie/${movie.imdbID}`;
+                    mediaPlayer.src = newEmbedUrl;
+                });
+            } else if (type === "series") {
+                fetchSeasons(movie.imdbID);
+            }
+        }
+
+        // Function to fetch and display available seasons
+        async function fetchSeasons(imdbID) {
+            const seasonSelect = document.getElementById('season-select');
+            const episodeSelect = document.getElementById('episode-select');
+
+            seasonSelect.style.display = 'block'; // Show season selector
+            episodeSelect.style.display = 'block'; // Show episode selector
+
+            const seasonUrl = `https://www.omdbapi.com/?apikey=${OMDB_API_KEY}&i=${imdbID}&type=series`;
+
+            let keepFetching = true;
+            let season = 1;
+
+            // Clear the season select options
+            seasonSelect.innerHTML = '';
+
+            while (keepFetching) {
+                const response = await fetch(`${seasonUrl}&Season=${season}`);
+                const data = await response.json();
+
+                if (data.Response === "True" && data.Episodes) {
+                    // Create a new option for each season
+                    const option = document.createElement('option');
+                    option.value = season;
+                    option.textContent = `Season ${season}`;
+                    seasonSelect.appendChild(option);
+
+                    // If it's the first season, fetch and display episodes immediately
+                    if (season === 1) {
+                        populateEpisodes(imdbID, season); // Populate episodes for the first season
+                    }
+
+                    season++;
+                } else {
+                    // No more seasons
+                    keepFetching = false;
+                }
             }
 
-            season++;
-        } else {
-            // No more seasons
-            keepFetching = false;
+            // If there is only one season, automatically populate episodes for it
+            if (season === 2) {
+                populateEpisodes(imdbID, 1); // Handle single season
+            }
         }
-    }
 
-    // If there is only one season, automatically populate episodes for it
-    if (season === 2) {
-        populateEpisodes(imdbID, 1); // Handle single season
-    }
-}
+        // Function to populate episodes based on selected season
+        function populateEpisodes(imdbID, selectedSeason) {
+            const episodeSelect = document.getElementById('episode-select');
+            
+            episodeSelect.innerHTML = ''; // Clear previous options
 
-// Function to populate episodes based on selected season
-function populateEpisodes(imdbID, selectedSeason) {
-    const episodeSelect = document.getElementById('episode-select');
-    
-    episodeSelect.innerHTML = ''; // Clear previous options
-    fetchEpisodes(imdbID, selectedSeason).then(episodes => {
-        episodes.forEach(episode => {
-            const option = document.createElement('option');
-            option.value = episode.Episode;
-            option.textContent = `Episode ${episode.Episode}: ${episode.Title}`;
-            episodeSelect.appendChild(option);
+            fetchEpisodes(imdbID, selectedSeason).then(episodes => {
+                if (episodes.length === 0) {
+                    console.log("No episodes found for this season.");
+                }
+
+                episodes.forEach(episode => {
+                    const option = document.createElement('option');
+                    option.value = episode.Episode;
+                    option.textContent = `Episode ${episode.Episode}: ${episode.Title}`;
+                    episodeSelect.appendChild(option);
+                });
+
+                // Automatically select the first episode in the dropdown
+                if (episodes.length > 0) {
+                    episodeSelect.selectedIndex = 0;
+                }
+            });
+        }
+
+        // Function to fetch episodes for a specific season
+        async function fetchEpisodes(imdbID, season) {
+            const episodeUrl = `https://www.omdbapi.com/?apikey=${OMDB_API_KEY}&i=${imdbID}&Season=${season}`;
+            const response = await fetch(episodeUrl);
+            const data = await response.json();
+            return data.Episodes || []; // Return episodes or an empty array if none
+        }
+
+        // Add event listener to the season-select to trigger episode population
+        document.getElementById('season-select').addEventListener('change', function() {
+            const imdbID = document.querySelector('.result-item button').getAttribute('onclick').match(/'([^']+)'/)[1];
+            const selectedSeason = this.value;
+
+            // Fetch and populate the episodes based on the selected season
+            populateEpisodes(imdbID, selectedSeason);
         });
-        
-        // Automatically select the first episode in the dropdown
-        if (episodes.length > 0) {
-            episodeSelect.selectedIndex = 0;
+
+        // Function to go back to search results
+        function goBack() {
+            document.getElementById('movie-details').style.display = 'none';
+            document.getElementById('search-results').style.display = 'block';
         }
-    });
-}
 
-// Function to fetch episodes for a specific season
-async function fetchEpisodes(imdbID, season) {
-    const episodeUrl = `https://www.omdbapi.com/?apikey=${OMDB_API_KEY}&i=${imdbID}&Season=${season}`;
-    const response = await fetch(episodeUrl);
-    const data = await response.json();
-    return data.Episodes || []; // Return episodes or an empty array if none
-}
+        // Function to watch the selected episode
+        function watchEpisode() {
+            const selectedServer = document.getElementById('server-select').value;
+            const mediaPlayer = document.getElementById('media-player');
+            const imdbID = document.querySelector('.result-item button').getAttribute('onclick').match(/'([^']+)'/)[1];
+            const episodeSelect = document.getElementById('episode-select');
+            const selectedEpisode = episodeSelect.value;
 
-// Add event listener to the season-select to trigger episode population
-document.getElementById('season-select').addEventListener('change', function() {
-    const imdbID = document.querySelector('.result-item button').getAttribute('onclick').match(/'([^']+)'/)[1];
-    const selectedSeason = this.value;
-    populateEpisodes(imdbID, selectedSeason);
-});
+            const embedUrl = `${selectedServer}/embed/episode/${imdbID}/season/${document.getElementById('season-select').value}/episode/${selectedEpisode}`;
+            mediaPlayer.src = embedUrl;
+        }
+    </script>
+</body>
+</html>
