@@ -223,61 +223,57 @@
             }
         }
 
-        // Function to fetch and display available seasons
-        async function fetchSeasons(imdbID) {
-            const seasonSelect = document.getElementById('season-select');
-            const episodeSelect = document.getElementById('episode-select');
+// Update the fetchSeasons function to limit and populate seasons correctly
+async function fetchSeasons(imdbID) {
+    const seasonSelect = document.getElementById('season-select');
+    seasonSelect.innerHTML = ''; // Clear previous options
+    const seasonUrl = `https://www.omdbapi.com/?apikey=${OMDB_API_KEY}&i=${imdbID}&type=series`;
 
-            seasonSelect.style.display = 'block'; // Show season selector
-            episodeSelect.style.display = 'block'; // Show episode selector
+    let season = 1;
+    let keepFetching = true;
 
-            const seasonUrl = `https://www.omdbapi.com/?apikey=${OMDB_API_KEY}&i=${imdbID}&type=series`;
+    while (keepFetching) {
+        const response = await fetch(`${seasonUrl}&Season=${season}`);
+        const data = await response.json();
 
-            let keepFetching = true;
-            let season = 1;
-
-            // Clear the season select options
-            seasonSelect.innerHTML = '';
-
-            while (keepFetching) {
-                const response = await fetch(`${seasonUrl}&Season=${season}`);
-                const data = await response.json();
-
-                if (data.Response === "True" && data.Episodes) {
-                    // Create a new option for the season
-                    const option = document.createElement('option');
-                    option.value = season;
-                    option.textContent = `Season ${season}`;
-                    seasonSelect.appendChild(option);
-
-                    if (season === 1) {
-                        populateEpisodes(imdbID, season);
-                    }
-                    season++;
-                } else {
-                    keepFetching = false;
-                }
-            }
+        if (data.Response === "True" && data.Episodes) {
+            // Add option for each season
+            const option = document.createElement('option');
+            option.value = season;
+            option.textContent = `Season ${season}`;
+            seasonSelect.appendChild(option);
+            season++;
+        } else {
+            keepFetching = false;
         }
+    }
 
-        // Function to populate episodes based on selected season
-        function populateEpisodes(imdbID, selectedSeason) {
-            const episodeSelect = document.getElementById('episode-select');
-            episodeSelect.innerHTML = ''; // Clear previous options
+    // Add onchange event to populate episodes when a season is selected
+    seasonSelect.onchange = () => {
+        const selectedSeason = seasonSelect.value;
+        populateEpisodes(imdbID, selectedSeason);
+    };
+}
 
-            fetchEpisodes(imdbID, selectedSeason).then(episodes => {
-                episodes.forEach(episode => {
-                    const option = document.createElement('option');
-                    option.value = episode.Episode;
-                    option.textContent = `Episode ${episode.Episode}: ${episode.Title}`;
-                    episodeSelect.appendChild(option);
-                });
+// Modify populateEpisodes to handle only when called after season selection
+async function populateEpisodes(imdbID, selectedSeason) {
+    const episodeSelect = document.getElementById('episode-select');
+    episodeSelect.innerHTML = ''; // Clear previous options
 
-                if (episodes.length > 0) {
-                    episodeSelect.selectedIndex = 0; // Automatically select the first episode
-                }
-            });
-        }
+    const episodeUrl = `https://www.omdbapi.com/?apikey=${OMDB_API_KEY}&i=${imdbID}&Season=${selectedSeason}`;
+    const response = await fetch(episodeUrl);
+    const data = await response.json();
+
+    if (data.Response === "True" && data.Episodes) {
+        data.Episodes.forEach(episode => {
+            const option = document.createElement('option');
+            option.value = episode.Episode;
+            option.textContent = `Episode ${episode.Episode}: ${episode.Title}`;
+            episodeSelect.appendChild(option);
+        });
+    }
+}
+
 
         // Function to fetch episodes for a specific season
         async function fetchEpisodes(imdbID, season) {
