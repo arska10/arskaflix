@@ -98,7 +98,7 @@
     </style>
 </head>
 <body>
-    <h1>Search for Movies or TV Shows</h1>
+    <h1>Hae leffa tai elokuva</h1>
     <input type="text" id="search-input" placeholder="Enter movie or show name" />
     <button onclick="search()">Search</button>
 
@@ -106,24 +106,24 @@
 
     <!-- Movie/Show details section -->
     <div id="movie-details" class="movie-details">
-        <span class="back-button" onclick="goBack()">← Back to Search Results</span>
-        <h2 id="details-title">Movie Title</h2>
+        <span class="back-button" onclick="goBack()">← Takaisin</span>
+        <h2 id="details-title">Leffa</h2>
         <img id="details-poster" src="" alt="Poster">
         <p id="details-plot"></p>
-        <p><strong>Release Year:</strong> <span id="details-year"></span></p>
+        <p><strong>Tulo Vuosi:</strong> <span id="details-year"></span></p>
 
         <!-- Embed player and server selection -->
         <div id="embed-player">
             <h3>Select Server:</h3>
             <select id="server-select"></select>
-            <h3>Select Season and Episode</h3>
-            <label for="season-select">Season:</label>
+            <h3>Valitse kausi ja jakso</h3>
+            <label for="season-select">Kausi:</label>
             <select id="season-select" onchange="populateEpisodes()"></select>
-            <label for="episode-select">Episode:</label>
+            <label for="episode-select">Jakso:</label>
             <select id="episode-select"></select>
-            <button onclick="watchEpisode()">Watch Episode</button>
+            <button onclick="watchEpisode()">KATSO!!!</button>
 
-            <h3>Watch Now</h3>
+            <h3>KATSO NYT!!!/h3>
             <iframe id="media-player" src="" width="640" height="360" allowfullscreen></iframe>
         </div>
     </div>
