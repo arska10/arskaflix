@@ -22,7 +22,7 @@
         }
 
         .result-item {
-            background: #fff;
+            background: #808080;
             border: 1px solid #ddd;
             border-radius: 5px;
             padding: 10px;
@@ -160,7 +160,7 @@
                 resultDiv.innerHTML = `
                     <h3>${result.Title} (${result.Year})</h3>
                     <img src="${result.Poster}" alt="${result.Title} Poster" width="100">
-                    <button onclick="viewDetails('${result.imdbID}', '${result.Type}')">View Details</button>
+                    <button onclick="viewDetails('${result.imdbID}', '${result.Type}')">Avaa</button>
                 `;
                 searchResultsDiv.appendChild(resultDiv);
             });
